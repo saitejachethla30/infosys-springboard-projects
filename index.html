@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HDFC Bank | Account Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    :root { --bank-blue: #054b8c; --bank-navy: #012d57; --bank-gold: #f5a623; }
+    body { background: #f4f7fb; color: #172b4d; }
+    .navbar { background: linear-gradient(105deg, var(--bank-navy), var(--bank-blue)); }
+    .brand-mark { display: inline-grid; place-items: center; width: 38px; height: 38px; background: var(--bank-gold); color: var(--bank-navy); border-radius: 10px; font-weight: 800; }
+    .hero { background: linear-gradient(120deg, #012d57, #0869af); color: white; border-radius: 1.25rem; overflow: hidden; position: relative; }
+    .hero::after { content: ""; position: absolute; width: 280px; height: 280px; right: -100px; top: -155px; border: 45px solid rgba(255,255,255,.09); border-radius: 50%; }
+    .hero-content { position: relative; z-index: 1; }
+    .stat-card, .action-card, .accounts-card { border: 0; border-radius: 1rem; box-shadow: 0 8px 24px rgba(20, 48, 85, .07); }
+    .stat-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: .85rem; font-size: 1.3rem; }
+    .action-card { cursor: pointer; transition: transform .18s ease, box-shadow .18s ease; }
+    .action-card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(20, 48, 85, .13); }
+    .action-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: #e8f2fc; color: var(--bank-blue); font-size: 1.4rem; }
+    .table > :not(caption) > * > * { padding: .95rem .75rem; }
+    .account-number { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88rem; }
+    .empty-state { padding: 3.5rem 1rem; color: #6c7a90; }
+    .modal-header { background: var(--bank-navy); color: #fff; }
+    .modal-header .btn-close { filter: invert(1); }
+    .toast-container { z-index: 1090; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+    <div class="container py-2">
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" href="#">
+        <span class="brand-mark">H</span>
+        HDFC Bank <span class="fw-normal opacity-75">Management</span>
+      </a>
+      <span class="navbar-text text-white-50 small d-none d-sm-block"><i class="bi bi-shield-check me-1"></i>Secure banking dashboard</span>
+    </div>
+  </nav>
+
+  <main class="container py-4 py-md-5">
+    <section class="hero p-4 p-md-5 mb-4">
+      <div class="hero-content row align-items-center g-3">
+        <div class="col-md-8">
+          <p class="text-uppercase small fw-semibold text-warning mb-2">Bank management system</p>
+          <h1 class="display-6 fw-bold mb-2">Manage every account in one place.</h1>
+          <p class="mb-0 text-white-50">Open accounts, check balances, deposit funds, and make withdrawals securely.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <button class="btn btn-warning fw-semibold px-4 py-2" data-bs-toggle="modal" data-bs-target="#accountModal"><i class="bi bi-plus-circle me-2"></i>Open Account</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="row g-3 mb-4" aria-label="Account summary">
+      <div class="col-sm-6 col-lg-4">
+        <article class="card stat-card h-100"><div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-people"></i></div><div><p class="text-secondary small mb-1">Total Accounts</p><h2 id="accountCount" class="h3 mb-0">0</h2></div>
+        </div></article>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <article class="card stat-card h-100"><div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-wallet2"></i></div><div><p class="text-secondary small mb-1">Total Balance</p><h2 id="totalBalance" class="h3 mb-0">₹0</h2></div>
+        </div></article>
+      </div>
+      <div class="col-sm-12 col-lg-4">
+        <article class="card stat-card h-100"><div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-warning-subtle text-warning-emphasis"><i class="bi bi-bank"></i></div><div><p class="text-secondary small mb-1">Account Types</p><h2 id="accountTypes" class="h3 mb-0">0</h2></div>
+        </div></article>
+      </div>
+    </section>
+
+    <section class="row g-3 mb-4" aria-label="Quick actions">
+      <div class="col-md-4"><button class="card action-card h-100 w-100 text-start bg-white" data-bs-toggle="modal" data-bs-target="#accountModal"><div class="card-body d-flex gap-3 align-items-center"><span class="action-icon"><i class="bi bi-person-plus"></i></span><span><span class="d-block fw-semibold">Open new account</span><small class="text-secondary">Create a savings or current account</small></span></div></button></div>
+      <div class="col-md-4"><button class="card action-card h-100 w-100 text-start bg-white" id="depositAction"><div class="card-body d-flex gap-3 align-items-center"><span class="action-icon"><i class="bi bi-plus-lg"></i></span><span><span class="d-block fw-semibold">Deposit money</span><small class="text-secondary">Add funds to an account</small></span></div></button></div>
+      <div class="col-md-4"><button class="card action-card h-100 w-100 text-start bg-white" id="withdrawAction"><div class="card-body d-flex gap-3 align-items-center"><span class="action-icon"><i class="bi bi-arrow-up-right"></i></span><span><span class="d-block fw-semibold">Withdraw money</span><small class="text-secondary">Withdraw available funds</small></span></div></button></div>
+    </section>
+
+    <section class="card accounts-card">
+      <div class="card-body p-0">
+        <div class="p-4 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+          <div><h2 class="h4 mb-1">Customer accounts</h2><p class="mb-0 text-secondary small">Select an account to view or manage it.</p></div>
+          <div class="input-group" style="max-width: 330px;"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input id="accountSearch" class="form-control" type="search" placeholder="Search name or account number" aria-label="Search accounts"></div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th class="ps-4">Customer</th><th>Account Number</th><th>Type</th><th>Balance</th><th class="text-end pe-4">Actions</th></tr></thead>
+            <tbody id="accountsTable"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state text-center"><i class="bi bi-bank2 fs-1 d-block mb-2"></i><p class="mb-2 fw-semibold">No accounts yet</p><p class="small mb-3">Create your first customer account to begin.</p><button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#accountModal">Open Account</button></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal fade" id="accountModal" tabindex="-1" aria-labelledby="accountModalTitle" aria-hidden="true"><div class="modal-dialog"><form class="modal-content needs-validation" id="accountForm" novalidate>
+    <div class="modal-header"><h2 class="modal-title fs-5" id="accountModalTitle"><i class="bi bi-person-plus me-2"></i>Open New Account</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body"><div class="mb-3"><label class="form-label" for="customerName">Customer name</label><input class="form-control" id="customerName" maxlength="60" required autofocus><div class="invalid-feedback">Please enter the customer name.</div></div>
+      <div><label class="form-label" for="accountType">Account type</label><select class="form-select" id="accountType" required><option value="">Choose an account type</option><option value="Saving">Savings — opening balance ₹10,000</option><option value="Current">Current — opening balance ₹20,000</option></select><div class="invalid-feedback">Please choose an account type.</div></div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit">Create Account</button></div>
+  </form></div></div>
+
+  <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalTitle" aria-hidden="true"><div class="modal-dialog"><form class="modal-content needs-validation" id="transactionForm" novalidate>
+    <div class="modal-header"><h2 class="modal-title fs-5" id="transactionModalTitle"></h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+    <div class="modal-body"><input id="transactionKind" type="hidden"><div class="mb-3"><label class="form-label" for="transactionAccount">Account</label><select class="form-select" id="transactionAccount" required></select><div class="invalid-feedback">Select an account.</div></div>
+      <div><label class="form-label" for="transactionAmount">Amount</label><div class="input-group"><span class="input-group-text">₹</span><input class="form-control" id="transactionAmount" type="number" min="1" step="1" inputmode="numeric" placeholder="Enter amount" required></div><div class="invalid-feedback">Enter an amount greater than zero.</div></div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" id="transactionSubmit" type="submit">Continue</button></div>
+  </form></div></div>
+
+  <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalTitle" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="detailsModalTitle"><i class="bi bi-card-list me-2"></i>Account Details</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" id="detailsContent"></div><div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button></div></div></div></div>
+
+  <div class="toast-container position-fixed top-0 end-0 p-3"><div id="notification" class="toast align-items-center border-0" role="alert" aria-live="polite" aria-atomic="true"><div class="d-flex"><div id="notificationText" class="toast-body"></div><button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script>
+    const accounts = [];
+    const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+    const $ = (selector) => document.querySelector(selector);
+    const accountModal = new bootstrap.Modal('#accountModal');
+    const transactionModal = new bootstrap.Modal('#transactionModal');
+    const detailsModal = new bootstrap.Modal('#detailsModal');
+    const toast = new bootstrap.Toast('#notification', { delay: 3500 });
+
+    function makeAccountNumber() {
+      let number;
+      do { number = `hdfc${Math.floor(1000 + Math.random() * 9000)}`; } while (accounts.some(account => account.number === number));
+      return number;
+    }
+
+    function showNotice(message, type = 'success') {
+      const notification = $('#notification');
+      notification.className = `toast align-items-center border-0 text-bg-${type}`;
+      $('#notificationText').textContent = message;
+      toast.show();
+    }
+
+    function updateDashboard() {
+      $('#accountCount').textContent = accounts.length;
+      $('#totalBalance').textContent = currency.format(accounts.reduce((sum, account) => sum + account.balance, 0));
+      $('#accountTypes').textContent = new Set(accounts.map(account => account.type)).size;
+      renderAccounts();
+    }
+
+    function renderAccounts() {
+      const query = $('#accountSearch').value.trim().toLowerCase();
+      const visibleAccounts = accounts.filter(account => account.name.toLowerCase().includes(query) || account.number.includes(query));
+      const table = $('#accountsTable');
+      table.innerHTML = visibleAccounts.map(account => `
+        <tr>
+          <td class="ps-4"><span class="fw-semibold">${escapeHtml(account.name)}</span></td>
+          <td><span class="account-number">${account.number.toUpperCase()}</span></td>
+          <td><span class="badge text-bg-${account.type === 'Saving' ? 'primary' : 'warning'}">${account.type}</span></td>
+          <td class="fw-semibold">${currency.format(account.balance)}</td>
+          <td class="text-end pe-4"><div class="btn-group btn-group-sm"><button class="btn btn-outline-secondary" title="View details" aria-label="View ${escapeHtml(account.name)} details" onclick="showDetails('${account.number}')"><i class="bi bi-eye"></i></button><button class="btn btn-outline-primary" title="Deposit" aria-label="Deposit to ${escapeHtml(account.name)}" onclick="openTransaction('deposit', '${account.number}')"><i class="bi bi-plus-lg"></i></button><button class="btn btn-outline-danger" title="Withdraw" aria-label="Withdraw from ${escapeHtml(account.name)}" onclick="openTransaction('withdraw', '${account.number}')"><i class="bi bi-dash-lg"></i></button></div></td>
+        </tr>`).join('');
+      $('#emptyState').classList.toggle('d-none', accounts.length > 0 || query.length > 0);
+      if (accounts.length > 0 && visibleAccounts.length === 0) table.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No accounts match your search.</td></tr>';
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
+    }
+
+    function populateAccountChoices(selected = '') {
+      $('#transactionAccount').innerHTML = `<option value="">Choose an account</option>${accounts.map(account => `<option value="${account.number}" ${account.number === selected ? 'selected' : ''}>${escapeHtml(account.name)} — ${account.number.toUpperCase()} (${currency.format(account.balance)})</option>`).join('')}`;
+    }
+
+    function openTransaction(kind, accountNumber = '') {
+      if (!accounts.length) { showNotice('Create an account before making a transaction.', 'warning'); accountModal.show(); return; }
+      $('#transactionForm').reset();
+      $('#transactionForm').classList.remove('was-validated');
+      $('#transactionKind').value = kind;
+      $('#transactionModalTitle').innerHTML = `<i class="bi bi-${kind === 'deposit' ? 'plus-circle' : 'arrow-up-right-circle'} me-2"></i>${kind === 'deposit' ? 'Deposit Money' : 'Withdraw Money'}`;
+      $('#transactionSubmit').textContent = kind === 'deposit' ? 'Deposit' : 'Withdraw';
+      $('#transactionSubmit').className = `btn btn-${kind === 'deposit' ? 'primary' : 'danger'}`;
+      populateAccountChoices(accountNumber);
+      transactionModal.show();
+    }
+
+    function showDetails(accountNumber) {
+      const account = accounts.find(item => item.number === accountNumber);
+      if (!account) return;
+      $('#detailsContent').innerHTML = `<dl class="row mb-0"><dt class="col-sm-5 text-secondary">Account number</dt><dd class="col-sm-7 account-number">${account.number.toUpperCase()}</dd><dt class="col-sm-5 text-secondary">Customer name</dt><dd class="col-sm-7">${escapeHtml(account.name)}</dd><dt class="col-sm-5 text-secondary">Account type</dt><dd class="col-sm-7">${account.type}</dd><dt class="col-sm-5 text-secondary">Available balance</dt><dd class="col-sm-7 fs-5 fw-bold text-success">${currency.format(account.balance)}</dd></dl>`;
+      detailsModal.show();
+    }
+
+    $('#accountForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+      const type = $('#accountType').value;
+      const account = { number: makeAccountNumber(), name: $('#customerName').value.trim(), type, balance: type === 'Saving' ? 10000 : 20000 };
+      accounts.push(account);
+      form.reset(); form.classList.remove('was-validated'); accountModal.hide(); updateDashboard();
+      showNotice(`Account ${account.number.toUpperCase()} created with ${currency.format(account.balance)}.`);
+    });
+
+    $('#transactionForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const amount = Number($('#transactionAmount').value);
+      if (!form.checkValidity() || !Number.isInteger(amount) || amount < 1) { form.classList.add('was-validated'); return; }
+      const account = accounts.find(item => item.number === $('#transactionAccount').value);
+      const kind = $('#transactionKind').value;
+      if (kind === 'withdraw' && amount > account.balance) { showNotice('Funds not available for this withdrawal.', 'danger'); return; }
+      account.balance += kind === 'deposit' ? amount : -amount;
+      transactionModal.hide(); updateDashboard();
+      showNotice(`${kind === 'deposit' ? 'Deposit' : 'Withdrawal'} of ${currency.format(amount)} completed for ${account.number.toUpperCase()}.`);
+    });
+
+    $('#accountSearch').addEventListener('input', renderAccounts);
+    $('#depositAction').addEventListener('click', () => openTransaction('deposit'));
+    $('#withdrawAction').addEventListener('click', () => openTransaction('withdraw'));
+  </script>
+</body>
+</html>
